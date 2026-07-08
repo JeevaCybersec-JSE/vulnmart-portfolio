@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "version": 2,
   "builds": [
@@ -13,3 +14,5 @@
     }
   ]
 }
+=======
+>>>>>>> ecb896f (Fix Vercel deployment)
