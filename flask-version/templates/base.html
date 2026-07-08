@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Northfield Goods{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="mode-strip mode-{{ mode }}">
+  <span class="mode-strip__label">SQLi teaching sandbox — current mode:</span>
+  <form method="POST" action="{{ url_for('set_mode') }}" class="mode-strip__form">
+    <button type="submit" name="mode" value="vulnerable" class="mode-pill {{ 'is-active' if mode == 'vulnerable' else '' }}">vulnerable</button>
+    <button type="submit" name="mode" value="secure" class="mode-pill {{ 'is-active' if mode == 'secure' else '' }}">secure</button>
+  </form>
+  <a href="{{ url_for('reset') }}" class="mode-strip__reset">reset data</a>
+</div>
+
+<header class="site-header">
+  <a class="wordmark" href="{{ url_for('index') }}">Northfield&nbsp;Goods</a>
+  <nav class="site-nav">
+    <a href="{{ url_for('index') }}">Shop</a>
+    <a href="{{ url_for('login') }}">Account</a>
+  </nav>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<section class="console" id="console">
+  <div class="console__head">
+    <span class="console__dot"></span>
+    <span class="console__title">query console</span>
+    <span class="console__mode">{{ mode }}</span>
+  </div>
+  <div class="console__body">
+    {% if query_log %}
+      <pre class="console__line"><span class="console__prompt">sqlite&gt;</span> {{ query_log }}</pre>
+    {% else %}
+      <pre class="console__line console__line--muted"><span class="console__prompt">sqlite&gt;</span> waiting for a search or login attempt&hellip;</pre>
+    {% endif %}
+    {% if error %}
+      <pre class="console__line console__line--error">{{ error }}</pre>
+    {% endif %}
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p>Built as a portfolio piece to demonstrate UNION-based SQL injection and its remediation. No real user data. <a href="https://owasp.org/www-community/attacks/SQL_Injection" target="_blank" rel="noopener">OWASP: SQL Injection ↗</a></p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Northfield Goods — UNION SQLi Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+</head>
+<body class="mode-vulnerable">
+
+<div id="loading-banner" class="loading-banner">Booting an in-browser SQLite database (WASM)&hellip;</div>
+
+<div id="app-root" style="display:none;">
+
+  <div class="mode-strip mode-vulnerable" id="mode-strip">
+    <span class="mode-strip__label">SQLi teaching sandbox — current mode:</span>
+    <div class="mode-strip__form">
+      <button type="button" class="mode-pill is-active" data-mode="vulnerable">vulnerable</button>
+      <button type="button" class="mode-pill" data-mode="secure">secure</button>
+    </div>
+    <button type="button" id="reset-btn" class="mode-strip__reset" style="background:none;border:none;cursor:pointer;font-family:inherit;">reset data</button>
+  </div>
+
+  <header class="site-header">
+    <span class="wordmark">Northfield&nbsp;Goods</span>
+    <nav class="site-nav">
+      <button type="button" class="nav-link is-current" data-view="shop">Shop</button>
+      <button type="button" class="nav-link" data-view="login">Account</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- SHOP VIEW -->
+    <section class="view is-active" data-view="shop">
+      <section class="hero">
+        <p class="hero__eyebrow">Small-batch goods, wholesale prices</p>
+        <h1 class="hero__title">Search the catalog.</h1>
+        <form class="search-bar" id="search-form">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Try &quot;wool&quot;, or a payload like ' OR '1'='1"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="submit">Search</button>
+        </form>
+        <div class="chip-row" id="chip-row"></div>
+      </section>
+
+      <section class="grid" id="product-grid"></section>
+      <p class="empty" id="empty-state" style="display:none;">No products matched that query.</p>
+
+      <!-- <section class="hint-panel">
+        <h2>How the injection works here</h2>
+        <ol>
+          <li>In <strong>vulnerable</strong> mode, the search box is dropped straight into
+            <code>WHERE name LIKE '%&hellip;%'</code> with plain string concatenation — run
+            against a real SQLite engine compiled to WebAssembly, right in this tab.</li>
+          <li>Try <code>' OR '1'='1' --</code> to return every row regardless of the filter.</li>
+          <li>Find the column count with <code>' ORDER BY 6-- </code> (bump the number until it errors).</li>
+          <li>Once you know the count, pull data from another table:
+            <code>' UNION SELECT id, username, password, email, role, 1 FROM users-- </code></li>
+          <li>Go one layer deeper — the <code>internal_memos</code> table has the same column
+            shape as <code>users</code>. See if you can reach it.</li>
+        </ol>
+        <p class="hint-panel__note">Flip to <strong>secure</strong> mode and try the same payloads — the query console will show you exactly why they stop working.</p>
+      </section> -->
+    </section>
+
+    <!-- LOGIN VIEW -->
+    <section class="view" data-view="login">
+      <section class="auth">
+        <div class="auth__card">
+          <p class="hero__eyebrow">Staff &amp; customer login</p>
+          <h1 class="hero__title auth__title">Sign in.</h1>
+          <div class="callout callout--error" id="login-error" style="display:none;"></div>
+          <form class="auth__form" id="login-form">
+            <label>
+              Username
+              <input type="text" id="login-username" autocomplete="off" spellcheck="false">
+            </label>
+            <label>
+              Password
+              <input type="text" id="login-password" autocomplete="off" spellcheck="false">
+            </label>
+            <button type="submit">Sign in</button>
+          </form>
+          <div class="hint-panel hint-panel--compact">
+            <h2>Auth-bypass payload</h2>
+            <p>In <strong>vulnerable</strong> mode the query is:</p>
+            <pre class="code-block">SELECT * FROM users WHERE username = '&lt;input&gt;' AND password = '&lt;input&gt;'</pre>
+            <p>Try username <code>admin' --</code> with any password, or
+              <code>' OR '1'='1' --</code> in either field.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ACCOUNT VIEW -->
+    <section class="view" data-view="account">
+      <section class="auth">
+        <div class="auth__card">
+          <p class="hero__eyebrow">Signed in as</p>
+          <h1 class="hero__title auth__title" id="account-username"></h1>
+          <p class="account__role" id="account-role"></p>
+          <button type="button" id="logout-btn" class="chip">Sign out</button>
+
+          <div class="callout callout--success" id="admin-note" style="display:none;">
+            <strong>You're in as an administrator.</strong> A real attacker would now
+            pivot toward account takeover, order data, or stored payment details.
+            In this sandbox, see if you can also reach <code>internal_memos</code>
+            from the product search using UNION.
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <section class="console" id="console">
+    <div class="console__head">
+      <span class="console__dot"></span>
+      <span class="console__title">query console</span>
+      <span class="console__mode" id="console-mode">vulnerable</span>
+    </div>
+    <div class="console__body">
+      <pre class="console__line console__line--muted" id="console-line">sqlite&gt; waiting for a search or login attempt&hellip;</pre>
+      <pre class="console__line console__line--error" id="console-error" style="display:none;"></pre>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>Built as a portfolio piece to demonstrate UNION-based SQL injection and its remediation. Runs entirely client-side against a real SQLite (WASM) database — no server, no real data. <a href="https://owasp.org/www-community/attacks/SQL_Injection" target="_blank" rel="noopener">OWASP: SQL Injection ↗</a></p>
+  </footer>
+
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

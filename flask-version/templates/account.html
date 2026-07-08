@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My Account — Northfield Goods{% endblock %}
+{% block content %}
+
+<section class="auth">
+  <div class="auth__card">
+    <p class="hero__eyebrow">Signed in as</p>
+    <h1 class="hero__title auth__title">{{ username }}</h1>
+    <p class="account__role">role: {{ role }}</p>
+    <a href="{{ url_for('logout') }}" class="chip">Sign out</a>
+
+    {% if role == 'administrator' %}
+      <div class="callout callout--success">
+        <strong>You're in as an administrator.</strong> A real attacker would now
+        pivot toward account takeover, order data, or stored payment details.
+        In this sandbox, see if you can also reach <code>internal_memos</code>
+        from the product search using UNION.
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

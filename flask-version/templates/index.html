@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Shop — Northfield Goods{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <p class="hero__eyebrow">Small-batch goods, wholesale prices</p>
+  <h1 class="hero__title">Search the catalog.</h1>
+  <form class="search-bar" method="GET" action="{{ url_for('index') }}">
+    <input
+      type="text"
+      name="q"
+      value="{{ search }}"
+      placeholder="Try &quot;wool&quot;, or a payload like ' OR '1'='1"
+      autocomplete="off"
+      spellcheck="false"
+    >
+    <button type="submit">Search</button>
+  </form>
+  <div class="chip-row">
+    {% for c in categories %}
+      <a
+        class="chip {{ 'is-active' if active_category == c and not search else '' }}"
+        href="{{ url_for('index', category=c) }}"
+      >{{ c }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if error %}
+  <div class="callout callout--error">
+    <strong>Query failed.</strong> {{ error }}
+  </div>
+{% endif %}
+
+<section class="grid">
+  {% for p in products %}
+    <article class="card">
+      <div class="card__swatch" style="background:{{ p.swatch }}"></div>
+      <div class="card__body">
+        <p class="card__category">{{ p.category }}</p>
+        <h3 class="card__name">{{ p.name }}</h3>
+        <p class="card__desc">{{ p.description }}</p>
+        <p class="card__price">{{ '$%.2f'|format(p.price) if p.price is number else p.price }}</p>
+      </div>
+    </article>
+  {% else %}
+    <p class="empty">No products matched that query.</p>
+  {% endfor %}
+</section>
+
+<section class="hint-panel">
+  <h2>How the injection works here</h2>
+  <ol>
+    <li>In <strong>vulnerable</strong> mode, the search box is dropped straight into
+      <code>WHERE name LIKE '%…%'</code> with plain string concatenation.</li>
+    <li>Try <code>' OR '1'='1' --</code> to return every row regardless of the filter.</li>
+    <li>Find the column count with <code>' ORDER BY 6-- </code> (bump the number until it errors).</li>
+    <li>Once you know the count, pull data from another table:
+      <code>' UNION SELECT id, username, password, email, role, 1 FROM users-- </code></li>
+    <li>Go one layer deeper — the <code>internal_memos</code> table has the same column
+      shape as <code>users</code>. See if you can reach it.</li>
+  </ol>
+  <p class="hint-panel__note">Flip to <strong>secure</strong> mode and try the same payloads — the query console will show you exactly why they stop working.</p>
+</section>
+
+{% endblock %}
